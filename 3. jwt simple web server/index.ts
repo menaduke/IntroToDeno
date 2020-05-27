@@ -1,10 +1,28 @@
-import { serve } from "https://deno.land/std@0.53.0/http/server.ts";
+import { serve } from "https://deno.land/std/http/server.ts"
+import { validateJwt } from "https://deno.land/x/djwt/validate.ts"
+import { makeJwt, setExpiration, Jose, Payload } from "https://deno.land/x/djwt/create.ts"
 
-const s = serve({ port: 8000 });
-console.log("http://localhost:8000/");
-for await (const req of s) {
-  req.respond({ body: "Hello World\n" });
+const key = "your-secret"
+const payload: Payload = {
+  iss: "joe",
+  exp: setExpiration(new Date().getTime() + 60000),
+}
+const header: Jose = {
+  alg: "HS256",
+  typ: "JWT",
 }
 
-// to run make sure to supply the allow-net flag like so,
-// deno run --allow-net .\index.ts
+console.log("server is listening at 0.0.0.0:8000")
+for await (const req of serve("0.0.0.0:8000")) {
+  if (req.method === "GET") {
+    req.respond({ body: makeJwt({ header, payload, key }) + "\n" })
+  } else {
+    const jwt = new TextDecoder().decode(await Deno.readAll(req.body))
+    await validateJwt(jwt, key, { isThrowing: false })
+      ? req.respond({ body: "Valid JWT\n" })
+      : req.respond({ body: "Invalid JWT\n", status: 401 })
+  }
+}
+
+
+// be sure to use https://jwt.io/#debugger to check if its a valid encoded json and to see the decoded values
