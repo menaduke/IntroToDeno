@@ -1,0 +1,10 @@
+import { serve } from "https://deno.land/std@0.53.0/http/server.ts";
+
+const s = serve({ port: 8000 });
+console.log("http://localhost:8000/");
+for await (const req of s) {
+  req.respond({ body: "Hello World\n" });
+}
+
+// to run make sure to supply the allow-net flag like so,
+// deno run --allow-net .\index.ts
